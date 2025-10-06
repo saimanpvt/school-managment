@@ -4,6 +4,7 @@ const USER_ROLES = {
   TEACHER: 2,
   STUDENT: 3,
   PARENT: 4
+  
 };
 
 // Role hierarchy (lower number = higher privilege)
