@@ -8,6 +8,13 @@ const { validateRequiredFields, isValidEmail, validatePassword } = require('../u
  * Register a new user
  */
 const register = asyncHandler(async (req, res) => {
+  
+  // Only admins can create new users
+  const user = await User.findById(req.user?._id);
+  if(!user && user.role !== USER_ROLES.ADMIN) {
+    return sendErrorResponse(res, HTTP_STATUS.BAD_RUNAUTHORIZEDEQUEST, 'Permission Dennied', {message: "Only admins can create new users"});
+  }
+
   const { email, password, firstName, lastName, role, phone } = req.body;
 
   // Validate required fields
@@ -24,7 +31,7 @@ const register = asyncHandler(async (req, res) => {
   }
 
   // Validate password strength
-  const passwordValidation = validatePassword(password);
+  const passwordValidation = validatePassword(password, "register");
   if (!passwordValidation.isValid) {
     return sendErrorResponse(res, HTTP_STATUS.BAD_REQUEST, 'Password validation failed', passwordValidation.errors);
   }
@@ -36,28 +43,22 @@ const register = asyncHandler(async (req, res) => {
   }
 
   // Create user
-  const user = await User.create({
+  const addedUser = await User.create({
     email,
     password,
     firstName,
     lastName,
-    role: role || USER_ROLES.STUDENT,
+    role: USER_ROLES[role] || USER_ROLES.STUDENT,
     phone
   });
 
-  // Generate JWT token
-  const token = user.generateAuthToken();
-
-  // Set cookie
-  res.cookie('token', token, {
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production'
-  });
-
   sendSuccessResponse(res, HTTP_STATUS.CREATED, 'User registered successfully', {
-    user,
-    token
+    addedUser : {
+      email : addedUser.email, 
+      name : addedUser.firstName + " " + addedUser.lastName, 
+      role: role,
+      phone: addedUser.phone
+    }
   });
 });
 
@@ -92,7 +93,7 @@ const login = asyncHandler(async (req, res) => {
   }
 
   // Check password
-  const isPasswordValid = await user.comparePassword(password);
+  const isPasswordValid = await user.comparePassword(String(password), "login");
   
   if (!isPasswordValid) {
     return sendErrorResponse(res, HTTP_STATUS.UNAUTHORIZED, 'Invalid credentials');
@@ -113,7 +114,11 @@ const login = asyncHandler(async (req, res) => {
   });
 
   sendSuccessResponse(res, HTTP_STATUS.OK, 'Login successful', {
-    user,
+    addedUser : {
+      email : addedUser.email, 
+      name : addedUser.firstName + " " + addedUser.lastName, 
+      phone: addedUser.phone
+    },
     token
   });
 });
@@ -174,7 +179,7 @@ const changePassword = asyncHandler(async (req, res) => {
   }
 
   // Validate new password strength
-  const passwordValidation = validatePassword(newPassword);
+  const passwordValidation = validatePassword(newPassword, "register");
   if (!passwordValidation.isValid) {
     return sendErrorResponse(res, HTTP_STATUS.BAD_REQUEST, 'New password validation failed', passwordValidation.errors);
   }

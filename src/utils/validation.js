@@ -25,30 +25,29 @@ const isValidPhone = (phone) => {
  * @param {String} password - Password to validate
  * @returns {Object} - Validation result
  */
-const validatePassword = (password) => {
-  const result = {
-    isValid: true,
-    errors: []
-  };
+const validatePassword = (password, source) => {
+  const errors = [];
 
   if (!password) {
-    result.isValid = false;
-    result.errors.push('Password is required');
-    return result;
+    errors.push('Password is required');
   }
 
-  if (password.length < 6) {
-    result.isValid = false;
-    result.errors.push('Password must be at least 6 characters long');
-  }
+  if (source === 'register') {
+    if (password && password.length < 6) {
+      errors.push('Password must be at least 6 characters long');
+    }
 
-  if (password.length > 128) {
-    result.isValid = false;
-    result.errors.push('Password must be less than 128 characters');
+    if (password && password.length > 128) {
+      errors.push('Password must be less than 128 characters');
+    }
   }
-
-  return result;
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
 };
+
 
 /**
  * Validate required fields
@@ -63,7 +62,7 @@ const validateRequiredFields = (data, requiredFields) => {
   };
 
   requiredFields.forEach(field => {
-    if (!data[field] || (typeof data[field] === 'string' && data[field].trim() === '')) {
+    if (!data[field]) {
       result.isValid = false;
       result.errors.push(`${field} is required`);
     }
@@ -185,3 +184,6 @@ module.exports = {
   validateDate,
   validateAcademicYear
 };
+
+
+//Authenticaltioon: Only admin can register users, password length will be checked only while registering not at the time of login
