@@ -29,7 +29,7 @@ const authMiddleware = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
       // Get user from database
-      const user = await User.findById(decoded.id).select('-password');
+      const user = await User.findOne(decoded.email).select('-password');
       
       if (!user) {
         return res.status(HTTP_STATUS.UNAUTHORIZED).json({
