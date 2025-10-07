@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { HTTP_STATUS, MESSAGES } = require('../config/constants');
+const { HTTP_STATUS, MESSAGES, ROLE_NAMES } = require('../config/constants');
 
 const authMiddleware = async (req, res, next) => {
   try {
@@ -12,11 +12,10 @@ const authMiddleware = async (req, res, next) => {
     }
 
     // Check for token in cookies
-    if (!token && req.cookies.token) {
+    if (!token && req.cookies?.token) {
       token = req.cookies.token;
     }
 
-    // If no token found
     if (!token) {
       return res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
@@ -24,36 +23,38 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
+    // Verify token
+    let decoded;
     try {
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      
-      // Get user from database
-      const user = await User.findOne(decoded.email).select('-password');
-      
-      if (!user) {
-        return res.status(HTTP_STATUS.UNAUTHORIZED).json({
-          success: false,
-          message: MESSAGES.UNAUTHORIZED + ': User not found'
-        });
-      }
-
-      if (!user.isActive) {
-        return res.status(HTTP_STATUS.UNAUTHORIZED).json({
-          success: false,
-          message: MESSAGES.UNAUTHORIZED + ': User account is deactivated'
-        });
-      }
-
-      // Add user to request object
-      req.user = user;
-      next();
-    } catch (error) {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
       return res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
         message: MESSAGES.UNAUTHORIZED + ': Invalid token'
       });
     }
+
+    // Fetch user using email from token
+    const user = await User.findOne({ email: decoded.email }).select('-password -__v -createdAt -updatedAt');
+
+    if (!user) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        success: false,
+        message: MESSAGES.UNAUTHORIZED + ': User not found'
+      });
+    }
+
+    if (!user.isActive) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        success: false,
+        message: MESSAGES.UNAUTHORIZED + ': Account is deactivated'
+      });
+    }
+
+    // Attach sanitized user object with roleName
+    req.user = user;
+
+    next();
   } catch (error) {
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,

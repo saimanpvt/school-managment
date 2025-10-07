@@ -184,6 +184,3 @@ module.exports = {
   validateDate,
   validateAcademicYear
 };
-
-
-//Authenticaltioon: Only admin can register users, password length will be checked only while registering not at the time of login
