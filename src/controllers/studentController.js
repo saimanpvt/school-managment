@@ -26,7 +26,7 @@ const addStudent = asyncHandler(async (req, res) => {
   } = req.body;
 
   // Validate required fields
-  const requiredFields = ['user', 'studentId', 'parent', 'classTeacher', 'course', 'dateOfBirth', 'gender'];
+  const requiredFields = ['user', 'studentId', 'parent', 'classTeacher', 'course', 'dateOfBirth', 'gender', 'bloodGroup', 'emergencyContact'];
   const fieldValidation = validateRequiredFields(req.body, requiredFields);
   
   if (!fieldValidation.isValid) {

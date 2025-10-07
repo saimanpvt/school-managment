@@ -13,10 +13,10 @@ router.get('/', courseController.getCourseList);
 router.get('/:id', courseController.getCourse);
 
 // Student + Teacher routes
-router.post('/', allowRoles([USER_ROLES.STUDENT, USER_ROLES.TEACHER]), courseController.addCourse);
-router.put('/:id', allowRoles([USER_ROLES.STUDENT, USER_ROLES.TEACHER]), courseController.updateCourse);
+router.post('/', allowRoles([USER_ROLES.ADMIN]), courseController.addCourse);
+router.put('/:id', allowRoles([USER_ROLES.ADMIN]), courseController.updateCourse);
 
 // Admin only routes
-router.delete('/:id', requireAdmin, courseController.deleteCourse);
+router.delete('/:id', allowRoles([USER_ROLES.ADMIN]), courseController.deleteCourse);
 
 module.exports = router;

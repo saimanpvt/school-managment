@@ -8,12 +8,12 @@ const { requireAdmin, requireTeacherOrAdmin, canAccessStudentData } = require('.
 router.use(authMiddleware);
 
 // Admin only routes
-router.post('/', requireAdmin, studentController.addStudent);
-router.put('/:id', requireAdmin, studentController.updateStudent);
-router.delete('/:id', requireAdmin, studentController.deleteStudent);
+router.post('/', allowRoles([USER_ROLES.ADMIN]), studentController.addStudent);
+router.put('/:id', allowRoles([USER_ROLES.ADMIN]), studentController.updateStudent);
+router.delete('/:id', allowRoles([USER_ROLES.ADMIN]), studentController.deleteStudent);
 
 // Teacher + Admin routes
-router.get('/', requireTeacherOrAdmin, studentController.getStudentList);
+router.get('/', allowRoles([USER_ROLES.ADMIN, USER_ROLES.TEACHER]), studentController.getStudentList);
 
 // All roles with data access control
 router.get('/:id', canAccessStudentData, studentController.getStudent);
