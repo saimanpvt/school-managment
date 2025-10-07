@@ -55,7 +55,8 @@ const register = asyncHandler(async (req, res) => {
   sendSuccessResponse(res, HTTP_STATUS.CREATED, 'User registered successfully', {
     addedUser : {
       email : addedUser.email, 
-      name : addedUser.firstName + " " + addedUser.lastName, 
+      firstName : addedUser.firstName,
+      lastName : addedUser.lastName, 
       role: role,
       phone: addedUser.phone
     }
@@ -115,9 +116,10 @@ const login = asyncHandler(async (req, res) => {
 
   sendSuccessResponse(res, HTTP_STATUS.OK, 'Login successful', {
     addedUser : {
-      email : addedUser.email, 
-      name : addedUser.firstName + " " + addedUser.lastName, 
-      phone: addedUser.phone
+      email : user.email, 
+      firstName : user.firstName,
+      lastName : user.lastName, 
+      phone: user.phone
     },
     token
   });
@@ -155,13 +157,23 @@ const updateProfile = asyncHandler(async (req, res) => {
   if (phone) updateData.phone = phone;
   if (address) updateData.address = address;
 
-  const user = await User.findByIdAndUpdate(
+  const email = req.user.email;
+  const user = await User.findOne({ email });;
+
+  const updateUser = await User.findByIdAndUpdate(
     req.user._id,
     updateData,
     { new: true, runValidators: true }
   );
 
-  sendSuccessResponse(res, HTTP_STATUS.OK, 'Profile updated successfully', user);
+  sendSuccessResponse(res, HTTP_STATUS.OK, 'Profile updated successfully', 
+    {
+      email : updateUser.email, 
+      firstName : updateUser.firstName,
+      lastName : updateUser.lastName,
+      phone: updateUser.phone
+    }
+  );
 });
 
 /**
@@ -185,7 +197,8 @@ const changePassword = asyncHandler(async (req, res) => {
   }
 
   // Get user with password
-  const user = await User.findById(req.user._id).select('+password');
+  const email = req.user.email;
+  const user = await User.findOne({email}).select('+password');
 
   // Check current password
   const isCurrentPasswordValid = await user.comparePassword(currentPassword);
